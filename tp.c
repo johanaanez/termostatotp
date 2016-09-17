@@ -344,15 +344,16 @@ int sendTemperatures(socket_t *skt, char *fileSensor,char *startDate,char *step)
 	quantityPerMin = getMaxQuantityTempPerMin(step,dt.seconds);
 	char temperatures[(6*maxQuantityPerMin)*(sizeof(char))+20];
 	bool firstMinute = true;
+	int firstvalue= maxQuantityPerMin - quantityPerMin;
 
 
 	while (status = (readAtemperature(inputTemperatures,&temp, lastValue, &convertedTemp) ) > 0){
 		if (quantityPerMin == 0 || firstMinute == true){
-			firstMinute = false;
 			memset(temperatures, '\0', sizeof(temperatures));
 			dateTime_get(&dt, stringdt);
 			strcat(temperatures, stringdt);
 			strcat(temperatures, " ");
+			firstMinute = false;
 		}
 
 		snprintf(tempToString, 6, "%.1f", convertedTemp);
@@ -362,25 +363,34 @@ int sendTemperatures(socket_t *skt, char *fileSensor,char *startDate,char *step)
 		quantityPerMin++;
 		quantityPerDay++;
 		if (quantityPerMin== maxQuantityPerMin){
-			printf("%s \n", temperatures);
 			strcat(temperatures, "\n");
 			int bytes = sizeof(temperatures)+1;
 			status = socket_send(skt, temperatures,bytes);
 			if (status == 0){
 				return CONNECTION_ERROR;
 			}
-			printf("%s - Enviando %d muestras \n", stringdt, quantityPerMin);
+
+			//printf("%s", temperatures);
+			if (firstvalue< quantityPerMin){
+				printf("%s - Enviando %d muestras\n", stringdt, firstvalue);
+				firstvalue = quantityPerMin;
+			}
+			else{
+				printf("%s - Enviando %d muestras\n", stringdt, quantityPerMin);
+			}
+
 			quantityPerMin= 0;
 			dateTime_increaseMinutes(&dt);
-
+			firstMinute = false;
 		}
 		lastValue = temp;
 	}
 
-	//socket_send(skt, temperatures, sizeof(temperatures));
-	printf("%s \n", temperatures);
-	printf("Enviando %d muestras \n", quantityPerMin);
-	printf("%d \n", quantityPerDay);
+	strcat(temperatures, "\n");
+	socket_send(skt, temperatures, sizeof(temperatures));
+	//printf("%s", temperatures);
+	printf("%s - Enviando %d muestras \n", stringdt, quantityPerMin);
+	//printf("%d \n", quantityPerDay);
 
 	free(tempToString);
 
