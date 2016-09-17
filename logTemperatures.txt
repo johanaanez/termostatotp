@@ -1,0 +1,1 @@
+fecha hola Max=70.00 Min=-18.0 Mediana=10.25 Muestras=6
