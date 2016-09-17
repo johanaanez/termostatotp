@@ -144,32 +144,26 @@ bool isValidParams(int argc, char *argv[], int server){
 		//VALIDA QUE EL ARCHIVO EXISTA
 		sensorInput = fopen(argv[7],"rb");
 		if ( sensorInput == NULL ) {
-			fprintf(stderr, "No existe el archivo %s \n", argv[7]);
 			return false;
 		}
 		fclose(sensorInput);
 	}
 
-	printf("VALID PARAMS \n");
 	return true;
 }
 
 int isServerMode(int argc, char *argv[]){
 	/**Codigos de retorno: 0 servidor, 1 cliente, 2 error"**/
 
-	printf("argc %d \n", argc);
-	printf("mode %s \n", argv[1]);
 	if (argc < 3){
 		return INVALID_PARAMS;
 	}
 
 	if (strcmp(argv[1],SERVER) == 0){
-		printf("IS SERVER \n");
 		return 0;
 	}
 
 	if (strcmp(argv[1],CLIENT) == 0){
-			printf("IS CLIENT \n");
 			return 1;
 	}
 	else
@@ -419,7 +413,7 @@ int main(int argc, char *argv[]) {
 
 	//PARAMETROS INVALIDOS
 	if (isValidParams(argc, argv, isServer) == false){
-		printf("INVALID_PARAMS");
+
 		return INVALID_PARAMS;
 	}
 
@@ -495,6 +489,5 @@ int main(int argc, char *argv[]) {
 		socket_destroy(&client);
 	}
 
-	printf("FINISH \n");
 	return SUCCESS;
 }
