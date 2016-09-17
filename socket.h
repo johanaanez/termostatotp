@@ -1,6 +1,5 @@
 /*
- * socket.h
- *
+ * socket.h *
  *  Created on: 05/09/2016
  *      Author: joha
  */
@@ -8,6 +7,7 @@
 #ifndef SOCKET_H_
 #define SOCKET_H_
 #endif /* SOCKET_H_ */
+
 
 #include <stddef.h>
 #include <sys/types.h>

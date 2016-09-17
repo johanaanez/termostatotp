@@ -206,14 +206,14 @@ float getMediana(float temperatures[], int size){
 
 int getMinAndMax(float temperatures[],int size, char *line){
 	float max, min , mediana;
-	char *bufferMax = malloc(50*sizeof(char));
-	char *bufferMin = malloc(6*sizeof(char));
-	char *bufferMediana = malloc(6*sizeof(char));
-
 
 	if (size <= 0 || temperatures == NULL){
 		return ERROR;
 	}
+
+	char *bufferMax = malloc(50*sizeof(char));
+	char *bufferMin = malloc(6*sizeof(char));
+	char *bufferMediana = malloc(6*sizeof(char));
 
     qsort(temperatures, size, sizeof(float), comparefunc);
 	min = temperatures[0];
@@ -240,16 +240,16 @@ int getMinAndMax(float temperatures[],int size, char *line){
 }
 
 int writeLog(float temperatures[],char *date, char *idTermostato, char *step){
-	char *line = malloc(60*sizeof(char));
-	char *values = malloc(50*sizeof(char));
-	int size = (sizeof(temperatures) / sizeof(float));
-	char *cant= malloc(7*sizeof(char));
-
 	int maxQuantity = getMaxQuantityPerDay(step);
+	int size = (sizeof(temperatures) / sizeof(float));
 
 	if ( (maxQuantity == ERROR) || (size > maxQuantity)  ){
 		return ERROR;
 	}
+
+	char *line = malloc(60*sizeof(char));
+	char *values = malloc(50*sizeof(char));
+	char *cant= malloc(7*sizeof(char));
 
 	sprintf(cant, "%d", size);
 	getMinAndMax(temperatures, size,values);
@@ -336,7 +336,7 @@ int sendTemperatures(socket_t *skt, char *fileSensor,char *startDate,char *step)
 	float lastValue = 0 ,convertedTemp = 0;
 	unsigned short int temp=0;
 	char  stringdt[20];
-	char *tempToString = malloc((6)*sizeof(char));
+	char tempToString[6];
 	const char delimiter[7] = " -/_.:";
 
 	dateTime_t dt;
@@ -367,6 +367,8 @@ int sendTemperatures(socket_t *skt, char *fileSensor,char *startDate,char *step)
 			int bytes = sizeof(temperatures)+1;
 			status = socket_send(skt, temperatures,bytes);
 			if (status == 0){
+				fclose(inputTemperatures);
+
 				return CONNECTION_ERROR;
 			}
 
@@ -392,7 +394,6 @@ int sendTemperatures(socket_t *skt, char *fileSensor,char *startDate,char *step)
 	printf("%s - Enviando %d muestras \n", stringdt, quantityPerMin);
 	//printf("%d \n", quantityPerDay);
 
-	free(tempToString);
 
 	fclose(inputTemperatures);
 	return 0;
@@ -407,8 +408,8 @@ int main(int argc, char *argv[]) {
 
 	//INICIALIZACION CLIENTE
 	char *hostname = "localhost";
-	const char *port ="8080";
-	char *idTermostato;
+	char *port ="8080";
+	char *idTermostato= malloc(sizeof(7));
 
 	char *startDate;
 	char *fileSensor;
@@ -417,8 +418,8 @@ int main(int argc, char *argv[]) {
 	bool continue_running = true;
 
 	unsigned short len = 0;
-	char small_buf[60];
-	float temperatures[]= {10.1,10.2, 10.3, -18.0, 70.0, 11.0};
+	char small_buf[111];
+	//float temperatures[]= {10.1,10.2, 10.3, -18.0, 70.0, 11.0};
 	isServer = isServerMode(argc,argv);
 
 	//PARAMETROS INVALIDOS
@@ -427,36 +428,42 @@ int main(int argc, char *argv[]) {
 		return INVALID_PARAMS;
 	}
 
-	//VALIDACION SERVIDOR
-	if (isServer == 0){
-		socket_t *server = malloc(sizeof(socket_t));
-		socket_t *client = malloc(sizeof(client));
-		socket_create(server);
-		status = socket_bind_and_listen(server, port);
+	socket_t server;
+	socket_t client;
+
+
+	if (isServer == 0){ //MODO SERVER
+		socket_create(&server);
+		port = argv[2];
+		status = socket_bind_and_listen(&server, port);
 
 		if (status == 0){
 			return CONNECTION_ERROR;
 		}
 
-		skt = socket_accept(server, client);
+		skt = socket_accept(&server, &client);
 
 		if (skt < 0){
 			return CONNECTION_ERROR;
 		}
 
-		//printf(RECIBIENDO);
-		//printf("%s \n", idTermostato);
-
 		//LOOP PARA RECEIVE
-		bytes = socket_receive(client, idTermostato, sizeof(idTermostato));
+		bytes = socket_receive(&client, idTermostato, 7);
+
+		printf(RECIBIENDO);
+		printf("%s \n", idTermostato);
 
 		if (bytes < 0){
 			return CONNECTION_ERROR;
+			printf("error recibiendo id termo \n");
 		}
 
 		while (continue_running) {
-			 memset(small_buf, 0, strlen(small_buf));
-			 socket_receive(client, small_buf, 60);
+			printf("sigue recibiendo");
+			memset(small_buf, 0, strlen(small_buf));
+			socket_receive(&client, small_buf, 120);
+			printf("%s", small_buf);
+			printf(DATOS_RECIBIDOS);
 
 			 len = atoi(small_buf);
 			 if (len == 0) {
@@ -466,13 +473,12 @@ int main(int argc, char *argv[]) {
 
 
 		//logTemperatures(server, client, temperatures, startDate, idTermostato, step);
-		socket_shutdown(server);
+		socket_shutdown(&server);
 		printf(TERMOESTATO_DESCONECTADO);
 		printf("%s \n", idTermostato);
-		socket_destroy(server);
+		socket_destroy(&server);
 	}
-	else{
-		socket_t client;
+	else{ //MODO CLIENTE
 		socket_create(&client);
 		hostname = argv[2];
 		port = argv[3];
@@ -481,19 +487,21 @@ int main(int argc, char *argv[]) {
 		startDate = argv[6];
 		fileSensor = argv[7];
 
-		status = socket_connect(&client, hostname, port);
+		status = socket_connect(&server, hostname, port);
 
 		if (status == ERROR){
 			return CONNECTION_ERROR;
 		}
 
-		status = sendTemperatures(&client, fileSensor, startDate, step);
+		status = socket_send(&server, idTermostato, 10);
+
+		printf("Enviando id : %s \n", idTermostato);
+
+		status = sendTemperatures(&server, fileSensor, startDate, step);
 
 		if (status != SUCCESS){
 			return 	CONNECTION_ERROR;
 		}
-
-		//status = socket_send(client, paquete, sizeof(startDate));
 
 		socket_shutdown(&client);
 		socket_destroy(&client);
