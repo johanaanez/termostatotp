@@ -375,7 +375,6 @@ int sendTemperatures(socket_t *skt, char *fileSensor,char *startDate,char *step)
 			if (status == 0){
 				return CONNECTION_ERROR;
 			}
-
 			printf("%s - Enviando %d muestras \n", stringdt, quantityPerMin);
 			quantityPerMin= 0;
 			dateTime_increaseMinutes(&dt);
