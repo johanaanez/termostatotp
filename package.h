@@ -11,17 +11,21 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include "dateTime.h"
 
 
 typedef struct {
 	float *temperatures;
 	int size;
-	char *hora;
+	dateTime_t *dt;
 	char *idTermostato;
-	int maxQuantity;
+	int maxQuantityPerMin;
 } package_t;
 
-int package_create(package_t *self);
+int package_create(package_t *self,char *string);
 int package_destroy(package_t *self);
+float* package_getTemperatures(package_t *self);
+dateTime_t* package_getDateTime(package_t *self);
+float* package_getTemperatures(package_t *self);
 
 #endif /* PACKAGE_H_ */

@@ -418,7 +418,7 @@ int main(int argc, char *argv[]) {
 	bool continue_running = true;
 
 	unsigned short len = 0;
-	char small_buf[111];
+	char small_buf[500];
 	//float temperatures[]= {10.1,10.2, 10.3, -18.0, 70.0, 11.0};
 	isServer = isServerMode(argc,argv);
 
@@ -459,16 +459,16 @@ int main(int argc, char *argv[]) {
 		}
 
 		while (continue_running) {
-			printf("sigue recibiendo");
+			//printf("sigue recibiendo");
 			memset(small_buf, 0, strlen(small_buf));
 			socket_receive(&client, small_buf, 120);
 			printf("%s", small_buf);
 			printf(DATOS_RECIBIDOS);
 
-			 len = atoi(small_buf);
-			 if (len == 0) {
-				continue_running = false;
-			 }
+			len = atoi(small_buf);
+			if (len == 0) {
+			continue_running = false;
+			}
 		}
 
 

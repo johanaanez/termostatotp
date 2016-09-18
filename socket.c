@@ -171,10 +171,10 @@ int socket_receive(socket_t *self, char* buffer, size_t length){
 
 	  if (s == 0) { // nos cerraron el socket :(
 		 is_the_socket_valid = false;
-		 printf("cerraron socket: %s\n", gai_strerror(s));
+		 //printf("cerraron socket: %s\n", gai_strerror(s));
 	  }
 	  else if (s < 0) { // hubo un error >(
-		 printf("socket error: %s\n", gai_strerror(s));
+		 //printf("socket error: %s\n", gai_strerror(s));
 		 is_the_socket_valid = false;
 	  }
 	  else {
@@ -183,7 +183,7 @@ int socket_receive(socket_t *self, char* buffer, size_t length){
 	}
 
 	if (is_the_socket_valid) {
-		printf("Error in recv: %s\n", gai_strerror(s));
+		//printf("Error in recv: %s\n", gai_strerror(s));
 		return received;
 	}
 	else {
