@@ -112,7 +112,7 @@ int socket_connect(socket_t *self, const char* hostname, const char* port){
 	 }
 
 	self->socket = skt;
-	printf("CONECTADO EN SOCKET: %d\n", self->socket);
+	//printf("CONECTADO EN SOCKET: %d\n", self->socket);
 
 	return status;
 }
@@ -126,7 +126,7 @@ int socket_accept(socket_t *self, socket_t* accepted_socket){
 	}
 
 	accepted_socket->socket = status;
-	printf("SOCKET ACEPTADO: %d\n", accepted_socket->socket);
+	//printf("SOCKET ACEPTADO: %d\n", accepted_socket->socket);
 	return status;
 }
 

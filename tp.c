@@ -349,10 +349,10 @@ int sendTemperatures(socket_t *skt, char *fileSensor,char *startDate,char *step)
 
 	dateTime_t dt;
 	dateTime_createWithString(&dt, startDate, delimiter);
-	quantityPerMin = getMaxQuantityTempPerMin(step,dt.seconds);
+	quantityPerMin = getMaxQuantityTempPerMin(step,dt.seconds)+1;
 
 	bool firstMinute = true;
-	int firstvalue= maxQuantityPerMin - quantityPerMin;
+	int firstvalue= (maxQuantityPerMin - quantityPerMin)+1;
 	status= readAtemperature(inputTemperatures,&temp, lastValue, &convertedTemp);
 
 	while ( status> 0){
@@ -370,7 +370,7 @@ int sendTemperatures(socket_t *skt, char *fileSensor,char *startDate,char *step)
 
 		if (quantityPerMin<maxQuantityPerMin){
 			snprintf(tempToString, 8, "%.1f %s", convertedTemp, space);
-			status = socket_send(skt, tempToString,sizeof(tempToString));
+			status = socket_send(skt, tempToString,strlen(tempToString));
 			if (status == 0){
 				fclose(inputTemperatures);
 				return CONNECTION_ERROR;
@@ -380,7 +380,7 @@ int sendTemperatures(socket_t *skt, char *fileSensor,char *startDate,char *step)
 
 
 		if (quantityPerMin== maxQuantityPerMin){
-			snprintf(tempToString, 8, "%.1f %s", convertedTemp, "\n");
+			snprintf(tempToString, 9, "%.1f %s", convertedTemp, "\n\0");
 			status = socket_send(skt, tempToString,sizeof(tempToString));
 			if (status == 0){
 				fclose(inputTemperatures);
@@ -403,19 +403,11 @@ int sendTemperatures(socket_t *skt, char *fileSensor,char *startDate,char *step)
 		quantityPerDay++;
 		lastValue = temp;
 		status= readAtemperature(inputTemperatures,&temp, lastValue, &convertedTemp);
+
 	}
 
-
-	snprintf(tempToString, 8, "%.1f %s", convertedTemp, "\n");
-	status = socket_send(skt, tempToString,sizeof(tempToString));
-	if (status == 0){
-		fclose(inputTemperatures);
-		return CONNECTION_ERROR;
-	}
-
-	printf("%s", tempToString);
-	printf("%s- Enviando %d muestras \n", stringdt, quantityPerMin);
-	//printf("%d \n", quantityPerDay);
+	printf("\n%s- Enviando %d muestras \n", stringdt, quantityPerMin);
+	printf("%d \n", quantityPerDay);
 
 	fclose(inputTemperatures);
 	return 0;
@@ -486,7 +478,7 @@ int main(int argc, char *argv[]) {
 			memset(small_buf, '\0', sizeof(small_buf));
 			socket_receive(&client, small_buf, strlen(small_buf)-1);
 			printf(DATOS_RECIBIDOS);
-			printf(": %s \n", small_buf);
+			printf("%s \n", small_buf);
 
 			len = atoi(small_buf);
 			if (len == 0) {
