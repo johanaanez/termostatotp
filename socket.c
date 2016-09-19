@@ -22,6 +22,7 @@ const char *gai_strerror(int errcode);
  * **/
 
 int socket_create(socket_t *self){
+	self->socket = 1;
 	return 0;
 }
 
@@ -135,7 +136,7 @@ int socket_send(socket_t *self, const char* buffer, size_t length){
 	int status = 0;
 	bool is_the_socket_valid = true;
 
-	printf("SOCKET ENVIANDO: %d\n", self->socket);
+	//printf("SOCKET ENVIANDO: %d\n", self->socket);
 
 	while (sent < length && is_the_socket_valid) {
 		status = send(self->socket, &buffer[sent], length-sent, MSG_NOSIGNAL);
