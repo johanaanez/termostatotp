@@ -126,7 +126,6 @@ int socket_accept(socket_t *self, socket_t* accepted_socket){
 	}
 
 	accepted_socket->socket = status;
-	//printf("SOCKET ACEPTADO: %d\n", accepted_socket->socket);
 	return status;
 }
 
@@ -135,8 +134,6 @@ int socket_send(socket_t *self, const char* buffer, size_t length){
 	int sent = 0;
 	int status = 0;
 	bool is_the_socket_valid = true;
-
-	//printf("SOCKET ENVIANDO: %d\n", self->socket);
 
 	while (sent < length && is_the_socket_valid) {
 		status = send(self->socket, &buffer[sent], length-sent, MSG_NOSIGNAL);
@@ -169,7 +166,6 @@ int socket_receive(socket_t *self, char* buffer, size_t length){
 
 	while (received < length && is_the_socket_valid) {
 	  s = recv(self->socket, &buffer[received], length-received, MSG_NOSIGNAL);
-
 	  if (s == 0) { // nos cerraron el socket :(
 		 is_the_socket_valid = false;
 		 //printf("cerraron socket: %s\n", gai_strerror(s));

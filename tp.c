@@ -339,26 +339,29 @@ int sendTemperatures(socket_t *skt, char *fileSensor,char *startDate,char *step)
 	}
 
 	int maxQuantityPerMin = getMaxQuantityTempPerMin(step,MAX_SECONDS);
-	int quantityPerDay=0, quantityPerMin=1, status =1;
+	int quantityPerDay, quantityPerMin=1, status =1;
 	float lastValue = 0 ,convertedTemp = 0;
 	unsigned short int temp=0;
 	char  stringdt[21];
-	char tempToString[8];
+	char tempToString[10];
+	memset(tempToString, '\0', 10);
+
 	const char delimiter[7] = " -/_.:";
 	char space[2]=" ";
 
 	dateTime_t dt;
 	dateTime_createWithString(&dt, startDate, delimiter);
-	quantityPerMin = getMaxQuantityTempPerMin(step,dt.seconds)+1;
+	quantityPerMin = getMaxQuantityTempPerMin(step,dt.seconds);
 
-	bool firstMinute = true;
-	int firstvalue= (maxQuantityPerMin - quantityPerMin)+1;
+	bool firstMinute = true, lastMinute = false;
+	int firstvalue= (maxQuantityPerMin - quantityPerMin);
 	status= readAtemperature(inputTemperatures,&temp, lastValue, &convertedTemp);
+	quantityPerDay = 1;
+	quantityPerMin++;
 
-	while ( status> 0){
-		if (quantityPerMin == 1 || firstMinute == true){
+	while (status>0 ){
+		if (quantityPerMin == 1 || firstMinute){
 			dateTime_get(&dt, stringdt);
-			strcat(stringdt," ");
 			status = socket_send(skt, stringdt,sizeof(stringdt));
 			if (status == 0){
 				fclose(inputTemperatures);
@@ -368,46 +371,43 @@ int sendTemperatures(socket_t *skt, char *fileSensor,char *startDate,char *step)
 			firstMinute = false;
 		}
 
-		if (quantityPerMin<maxQuantityPerMin){
-			snprintf(tempToString, 8, "%.1f %s", convertedTemp, space);
-			status = socket_send(skt, tempToString,strlen(tempToString));
-			if (status == 0){
-				fclose(inputTemperatures);
-				return CONNECTION_ERROR;
-			}
+		snprintf(tempToString, 7, "%s%.1f", space, convertedTemp);
+		if (quantityPerMin< maxQuantityPerMin){
 			printf("%s", tempToString);
 		}
 
-
 		if (quantityPerMin== maxQuantityPerMin){
-			snprintf(tempToString, 9, "%.1f %s", convertedTemp, "\n\0");
-			status = socket_send(skt, tempToString,sizeof(tempToString));
-			if (status == 0){
-				fclose(inputTemperatures);
-				return CONNECTION_ERROR;
+			char lastTempToString[10];
+			strncpy(lastTempToString,tempToString,7);
+			snprintf(tempToString, 10, "%s%s", lastTempToString, "\n");
+			printf("%s", tempToString);
+
+			if (firstvalue< maxQuantityPerMin){
+				quantityPerMin = firstvalue;
+				firstvalue = maxQuantityPerMin;
 			}
 
-			printf("%s", tempToString);
-			if (firstvalue< quantityPerMin){
-				printf("%s- Enviando %d muestras\n", stringdt, firstvalue);
-				firstvalue = quantityPerMin;
-			}
-			else{
-				printf("%s- Enviando %d muestras\n", stringdt, quantityPerMin);
-			}
+			printf("%s- Enviando %d muestras\n", stringdt, quantityPerMin);
 
 			quantityPerMin= 0;
 			dateTime_increaseMinutes(&dt);
 		}
-		quantityPerMin++;
-		quantityPerDay++;
+
+		status = socket_send(skt, tempToString,sizeof(tempToString));
+		if (status == 0){
+			fclose(inputTemperatures);
+			return CONNECTION_ERROR;
+		}
+
 		lastValue = temp;
 		status= readAtemperature(inputTemperatures,&temp, lastValue, &convertedTemp);
+		quantityPerMin++;
+		quantityPerDay++;
 
 	}
 
-	printf("\n%s- Enviando %d muestras \n", stringdt, quantityPerMin);
-	printf("%d \n", quantityPerDay);
+	printf("\n%s- Enviando %d muestras \n", stringdt, quantityPerMin-1);
+	//printf("%d \n", quantityPerDay);
 
 	fclose(inputTemperatures);
 	return 0;
@@ -432,7 +432,7 @@ int main(int argc, char *argv[]) {
 	bool continue_running = true;
 
 	unsigned short len = 0;
-	char small_buf[111];
+	char small_buf[10];
 	//float temperatures[]= {10.1,10.2, 10.3, -18.0, 70.0, 11.0};
 	isServer = isServerMode(argc,argv);
 
@@ -473,16 +473,16 @@ int main(int argc, char *argv[]) {
 			printf("error recibiendo id termo \n");
 		}
 
+		char *total = malloc(1000*sizeof(char));
+		memset(total, '\0', 1000);
+
 		while (continue_running) {
-			//printf("sigue recibiendo");
-			memset(small_buf, '\0', sizeof(small_buf));
-			socket_receive(&client, small_buf, strlen(small_buf)-1);
+			bytes = socket_receive(&client, small_buf, 20);
 			printf(DATOS_RECIBIDOS);
 			printf("%s \n", small_buf);
 
-			len = atoi(small_buf);
-			if (len == 0) {
-			continue_running = false;
+			if (bytes <= 0){
+				continue_running = false;
 			}
 		}
 
