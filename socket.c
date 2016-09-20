@@ -164,6 +164,9 @@ int socket_receive(socket_t *self, char* buffer, size_t size){
 	memset(buffer ,0 , size);
 	while (size> received && is_the_socket_valid) {
 		bytes = recv(self->socket, &buffer[received], size-received, MSG_NOSIGNAL);
+		if (received && buffer[received]==' '){
+			break;
+		}
 
 		if ( bytes <= 0) {
 			is_the_socket_valid = false;

@@ -5,9 +5,8 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include "dateTime.h"
 #include "socket.h"
-
+#include "package.h"
 
 #ifndef INVALID_PARAMS
 #define INVALID_PARAMS 2
@@ -93,16 +92,6 @@
 #define MUESTRAS "Muestras="
 #endif
 
-/*int initializeClient(char *argv[]){
-	char *hostname = argv[2];
-	char *port = argv[3];
-	char *idTermostato = argv[4];
-	char *step = argv [5];
-	char *startDate = argv[6];
-	//char *fileName
-
-	return 0;
-}*/
 
 bool isValidParams(int argc, char *argv[], int server){
 	int step= 0, port = 20;
@@ -413,6 +402,17 @@ int sendTemperatures(socket_t *skt, char *fileSensor,char *startDate,char *step)
 	return 0;
 }
 
+int saveTemperatures(package_t *package, dateTime_t *dt, char *string, package_t allTemperatures[]){
+
+	int index = strcspn(string, "");
+
+
+	//dividir el string con spacios
+	//si largo >= 19 createwithString
+	//Sino transformar con snprintf
+	return 0;
+}
+
 int main(int argc, char *argv[]) {
 
 	int status = 0;
@@ -431,7 +431,6 @@ int main(int argc, char *argv[]) {
 	int skt;
 	bool continue_running = true;
 
-	//float temperatures[]= {10.1,10.2, 10.3, -18.0, 70.0, 11.0};
 	isServer = isServerMode(argc,argv);
 
 	//PARAMETROS INVALIDOS
@@ -468,7 +467,6 @@ int main(int argc, char *argv[]) {
 
 		if (bytes < 0){
 			return CONNECTION_ERROR;
-			printf("error recibiendo id termo \n");
 		}
 
 		char *total = malloc(1000*sizeof(char));
@@ -476,16 +474,22 @@ int main(int argc, char *argv[]) {
 
 		char temperature[30];
 		char date[22];
+		package_t package;
+		dateTime_t dt;
+		package_t allTemperatures[24];
 
+		//NO HACER UN SOLO RCV, DA SMASH DETECTED!
 		while (continue_running) {
-			bytes = socket_receive(&client, date, 22);
+			bytes = socket_receive(&client, date, 20);
 			if (bytes <= 0){
 				continue_running = false;
 			}
-			bytes = socket_receive(&client, temperature, 30);
+			bytes = socket_receive(&client, temperature, 20);
 			if (bytes <= 0){
 				continue_running = false;
 			}
+
+			saveTemperatures(&package, &dt, temperature,allTemperatures);
 			printf(DATOS_RECIBIDOS);
 			printf("%s%s\n", date, temperature);
 		}

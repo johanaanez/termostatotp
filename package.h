@@ -1,10 +1,3 @@
-/*
- * serverData.h
- *
- *  Created on: 05/09/2016
- *      Author: joha
- */
-
 #ifndef PACKAGE_H_
 #define PACKAGE_H_
 
@@ -15,10 +8,9 @@
 
 
 typedef struct {
-	float *temperatures;
 	int size;
-	dateTime_t *dt;
-	char *idTermostato;
+	float temperatures[900];
+	dateTime_t dt[60];
 	int maxQuantityPerMin;
 } package_t;
 
