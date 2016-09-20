@@ -130,18 +130,15 @@ int socket_accept(socket_t *self, socket_t* accepted_socket){
 }
 
 //Cliente servidor
-int socket_send(socket_t *self, const char* buffer, size_t length){
+int socket_send(socket_t *self, const char* buffer, size_t size){
 	int sent = 0;
 	int status = 0;
 	bool is_the_socket_valid = true;
 
-	while (sent < length && is_the_socket_valid) {
-		status = send(self->socket, &buffer[sent], length-sent, MSG_NOSIGNAL);
+	while (sent < size && is_the_socket_valid) {
+		status = send(self->socket, &buffer[sent], size-sent-1, MSG_NOSIGNAL);
 
-		if (status == 0) {
-			is_the_socket_valid = false;
-		}
-		else if (status < 0) {
+		if (status <= 0) {
 			is_the_socket_valid = false;
 		}
 		else {
@@ -159,34 +156,63 @@ int socket_send(socket_t *self, const char* buffer, size_t length){
 }
 
 //Cliente servidor
-int socket_receive(socket_t *self, char* buffer, size_t length){
+int socket_receive(socket_t *self, char* buffer, size_t size){
 	int received = 0;
-	int s = 0;
+	int bytes = 0;
 	bool is_the_socket_valid = true;
 
-	while (received < length && is_the_socket_valid) {
-	  s = recv(self->socket, &buffer[received], length-received, MSG_NOSIGNAL);
-	  if (s == 0) { // nos cerraron el socket :(
-		 is_the_socket_valid = false;
-		 //printf("cerraron socket: %s\n", gai_strerror(s));
-	  }
-	  else if (s < 0) { // hubo un error >(
-		 //printf("socket error: %s\n", gai_strerror(s));
-		 is_the_socket_valid = false;
-	  }
-	  else {
-		 received += s;
-	  }
+	memset(buffer ,0 , size);
+	while (size> received && is_the_socket_valid) {
+		bytes = recv(self->socket, &buffer[received], size-received, MSG_NOSIGNAL);
+		if ( bytes <= 0) {
+			is_the_socket_valid = false;
+		}
+		else {
+			received += bytes;
+		}
 	}
 
 	if (is_the_socket_valid) {
-		//printf("Error in recv: %s\n", gai_strerror(s));
 		return received;
 	}
 	else {
 	  return -1;
 	}
 }
+
+
+/*int socket_receive(socket_t *self, char* buffer, size_t length){
+	int received = 0;
+	int s = 0;
+	bool is_the_socket_valid = true;
+
+	memset(buffer ,0 , length);
+	while (received < length && is_the_socket_valid) {
+		s = recv(self->socket, buffer+received, length, MSG_NOSIGNAL);
+		if (s == 0) { // nos cerraron el socket :(
+		is_the_socket_valid = false;
+		//printf("cerraron socket: %s\n", gai_strerror(s));
+		}
+		else if (s < 0) { // hubo un error >(
+		//printf("socket error: %s\n", gai_strerror(s));
+		is_the_socket_valid = false;
+		}
+		else {
+		received += s;
+		}
+	}
+
+	buffer[received] = '\0';
+	if (is_the_socket_valid) {
+	//printf("Error in recv: %s\n", gai_strerror(s));
+
+	return received;
+}
+else {
+ return -1;
+}
+}*/
+
 
 //Cliente servidor
 void socket_shutdown(socket_t *self){

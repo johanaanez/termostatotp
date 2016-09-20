@@ -342,7 +342,7 @@ int sendTemperatures(socket_t *skt, char *fileSensor,char *startDate,char *step)
 	int quantityPerDay, quantityPerMin=1, status =1;
 	float lastValue = 0 ,convertedTemp = 0;
 	unsigned short int temp=0;
-	char  stringdt[21];
+	char  stringdt[20];
 	char tempToString[10];
 	memset(tempToString, '\0', 10);
 
@@ -353,7 +353,7 @@ int sendTemperatures(socket_t *skt, char *fileSensor,char *startDate,char *step)
 	dateTime_createWithString(&dt, startDate, delimiter);
 	quantityPerMin = getMaxQuantityTempPerMin(step,dt.seconds);
 
-	bool firstMinute = true, lastMinute = false;
+	bool firstMinute = true;
 	int firstvalue= (maxQuantityPerMin - quantityPerMin);
 	status= readAtemperature(inputTemperatures,&temp, lastValue, &convertedTemp);
 	quantityPerDay = 1;
@@ -362,7 +362,7 @@ int sendTemperatures(socket_t *skt, char *fileSensor,char *startDate,char *step)
 	while (status>0 ){
 		if (quantityPerMin == 1 || firstMinute){
 			dateTime_get(&dt, stringdt);
-			status = socket_send(skt, stringdt,sizeof(stringdt));
+			status = socket_send(skt, stringdt,strlen(stringdt)+1);
 			if (status == 0){
 				fclose(inputTemperatures);
 				return CONNECTION_ERROR;
@@ -371,14 +371,14 @@ int sendTemperatures(socket_t *skt, char *fileSensor,char *startDate,char *step)
 			firstMinute = false;
 		}
 
-		snprintf(tempToString, 7, "%s%.1f", space, convertedTemp);
+		snprintf(tempToString, 8, "%s%.1f", space, convertedTemp);
 		if (quantityPerMin< maxQuantityPerMin){
 			printf("%s", tempToString);
 		}
 
 		if (quantityPerMin== maxQuantityPerMin){
 			char lastTempToString[10];
-			strncpy(lastTempToString,tempToString,7);
+			strncpy(lastTempToString,tempToString,6);
 			snprintf(tempToString, 10, "%s%s", lastTempToString, "\n");
 			printf("%s", tempToString);
 
@@ -393,7 +393,7 @@ int sendTemperatures(socket_t *skt, char *fileSensor,char *startDate,char *step)
 			dateTime_increaseMinutes(&dt);
 		}
 
-		status = socket_send(skt, tempToString,sizeof(tempToString));
+		status = socket_send(skt, tempToString,strlen(tempToString)+1);
 		if (status == 0){
 			fclose(inputTemperatures);
 			return CONNECTION_ERROR;
@@ -431,8 +431,6 @@ int main(int argc, char *argv[]) {
 	int skt;
 	bool continue_running = true;
 
-	unsigned short len = 0;
-	char small_buf[10];
 	//float temperatures[]= {10.1,10.2, 10.3, -18.0, 70.0, 11.0};
 	isServer = isServerMode(argc,argv);
 
@@ -474,7 +472,10 @@ int main(int argc, char *argv[]) {
 		}
 
 		char *total = malloc(1000*sizeof(char));
-		memset(total, '\0', 1000);
+		memset(total, 0, 1000);
+
+		char small_buf[20];
+		char date[60];
 
 		while (continue_running) {
 			bytes = socket_receive(&client, small_buf, 20);
