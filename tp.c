@@ -474,23 +474,20 @@ int main(int argc, char *argv[]) {
 		char *total = malloc(1000*sizeof(char));
 		memset(total, 0, 1000);
 
-		char temperature[10];
-		char date[20];
+		char temperature[30];
+		char date[22];
 
 		while (continue_running) {
 			bytes = socket_receive(&client, date, 22);
-			//printf(DATOS_RECIBIDOS);
-			printf("%s", date);
-
 			if (bytes <= 0){
 				continue_running = false;
 			}
-			bytes = socket_receive(&client, temperature, 8);
-			printf("%s\n", temperature);
-
+			bytes = socket_receive(&client, temperature, 30);
 			if (bytes <= 0){
 				continue_running = false;
 			}
+			printf(DATOS_RECIBIDOS);
+			printf("%s%s\n", date, temperature);
 		}
 
 

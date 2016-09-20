@@ -164,6 +164,7 @@ int socket_receive(socket_t *self, char* buffer, size_t size){
 	memset(buffer ,0 , size);
 	while (size> received && is_the_socket_valid) {
 		bytes = recv(self->socket, &buffer[received], size-received, MSG_NOSIGNAL);
+
 		if ( bytes <= 0) {
 			is_the_socket_valid = false;
 		}
@@ -189,13 +190,8 @@ int socket_receive(socket_t *self, char* buffer, size_t size){
 	memset(buffer ,0 , length);
 	while (received < length && is_the_socket_valid) {
 		s = recv(self->socket, buffer+received, length, MSG_NOSIGNAL);
-		if (s == 0) { // nos cerraron el socket :(
-		is_the_socket_valid = false;
-		//printf("cerraron socket: %s\n", gai_strerror(s));
-		}
-		else if (s < 0) { // hubo un error >(
-		//printf("socket error: %s\n", gai_strerror(s));
-		is_the_socket_valid = false;
+		if (s <= 0) {
+			is_the_socket_valid = false;
 		}
 		else {
 		received += s;
@@ -204,13 +200,11 @@ int socket_receive(socket_t *self, char* buffer, size_t size){
 
 	buffer[received] = '\0';
 	if (is_the_socket_valid) {
-	//printf("Error in recv: %s\n", gai_strerror(s));
-
-	return received;
-}
-else {
- return -1;
-}
+		return received;
+	}
+	else {
+		return -1;
+	}
 }*/
 
 
