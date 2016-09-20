@@ -461,7 +461,7 @@ int main(int argc, char *argv[]) {
 		}
 
 		//LOOP PARA RECEIVE
-		bytes = socket_receive(&client, idTermostato, 7);
+		bytes = socket_receive(&client, idTermostato,7);
 
 		printf(RECIBIENDO);
 		printf("%s \n", idTermostato);
@@ -474,13 +474,19 @@ int main(int argc, char *argv[]) {
 		char *total = malloc(1000*sizeof(char));
 		memset(total, 0, 1000);
 
-		char small_buf[20];
-		char date[60];
+		char temperature[10];
+		char date[20];
 
 		while (continue_running) {
-			bytes = socket_receive(&client, small_buf, 20);
-			printf(DATOS_RECIBIDOS);
-			printf("%s \n", small_buf);
+			bytes = socket_receive(&client, date, 22);
+			//printf(DATOS_RECIBIDOS);
+			printf("%s", date);
+
+			if (bytes <= 0){
+				continue_running = false;
+			}
+			bytes = socket_receive(&client, temperature, 8);
+			printf("%s\n", temperature);
 
 			if (bytes <= 0){
 				continue_running = false;
@@ -512,7 +518,7 @@ int main(int argc, char *argv[]) {
 		}
 
 		snprintf(idTermoToSend, 9, "%s %s", idTermostato, enter);
-		status = socket_send(&server, idTermoToSend, sizeof(idTermoToSend));
+		status = socket_send(&server, idTermoToSend, strlen(idTermoToSend));
 		printf("Enviando id : %s", idTermoToSend);
 
 		status = sendTemperatures(&server, fileSensor, startDate, step);
