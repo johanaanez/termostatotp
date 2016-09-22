@@ -1,25 +1,6 @@
-/*
- * socket.c
- *
- *  Created on: 05/09/2016
- *      Author: joha
- */
 #include <string.h>
 #include <stddef.h>
 #include "socket.h"
-
-#define MAX_SMALL_BUF_LEN 2
-
-
-/**
-int getaddrinfo(const char *node, const char *service,
-			   const struct addrinfo *hints,
-			   struct addrinfo **res);
-
-void freeaddrinfo(struct addrinfo *res);
-
-const char *gai_strerror(int errcode);
- * **/
 
 int socket_create(socket_t *self){
 	self->socket = 1;
@@ -52,20 +33,18 @@ int socket_bind_and_listen(socket_t *self, const char *port){
 	self->socket = skt;
 
 	if (skt == -1) {
-	  printf("Error: %s\n", strerror(errno));
+
 	  return 1;
 	}
 
 	s = bind(skt, ptr->ai_addr, ptr->ai_addrlen);
 	if (s == -1) {
-	  printf("Error: %s\n", strerror(errno));
 	  close(skt);
 	  return 1;
 	}
 
 	s = listen(skt, 20);
 	if (s == -1) {
-	  printf("Error: %s\n", strerror(errno));
 	  close(skt);
 	  return 1;
 	}
@@ -90,7 +69,6 @@ int socket_connect(socket_t *self, const char* hostname, const char* port){
 	status = getaddrinfo(hostname, port, &hints, &ptr);
 
 	if (status != 0) {
-	  printf("Error in getaddrinfo: %s\n", gai_strerror(status));
 	  return ERROR;
 	}
 
@@ -98,7 +76,6 @@ int socket_connect(socket_t *self, const char* hostname, const char* port){
 	skt = socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol);
 
 	if (skt == ERROR) {
-	  printf("Error: %s\n", strerror(errno));
 	  return ERROR;
 	}
 
@@ -106,13 +83,11 @@ int socket_connect(socket_t *self, const char* hostname, const char* port){
 
 	status = connect(skt, addr->ai_addr, addr->ai_addrlen);
 	if (status == ERROR) {
-		printf("Error: %s\n", strerror(errno));
 		close(self->socket);
 		return ERROR;
 	 }
 
 	self->socket = skt;
-	//printf("CONECTADO EN SOCKET: %d\n", self->socket);
 
 	return status;
 }
@@ -122,7 +97,7 @@ int socket_accept(socket_t *self, socket_t* accepted_socket){
 	int status=0;
 	status = accept(self->socket, NULL, NULL);   // aceptamos un cliente
 	if (status == ERROR) {
-		printf("Error: %s\n", strerror(errno));
+		return ERROR;
 	}
 
 	accepted_socket->socket = status;
@@ -164,10 +139,38 @@ int socket_receive(socket_t *self, char* buffer, size_t size){
 	memset(buffer ,0 , size);
 	while (size> received && is_the_socket_valid) {
 		bytes = recv(self->socket, &buffer[received], size-received, MSG_NOSIGNAL);
-		if (received && buffer[received]==' '){
+		if (received && buffer[received]== " "){
 			break;
-		}
 
+		}
+		if ( bytes <= 0) {
+			is_the_socket_valid = false;
+		}
+		else {
+			received += bytes;
+		}
+	}
+
+	if (is_the_socket_valid) {
+		return received;
+	}
+	else {
+	  return -1;
+	}
+}
+
+int socket_receiveTemp(socket_t *self, char* buffer, size_t size){
+	int received = 0;
+	int bytes = 0;
+	bool is_the_socket_valid = true;
+
+	memset(buffer ,0 , size);
+	while (size> received && is_the_socket_valid) {
+		bytes = recv(self->socket, &buffer[received],1, MSG_NOSIGNAL);
+		if (received && (buffer[received]== ' ' || buffer[received]== '\n' )){
+			break;
+
+		}
 		if ( bytes <= 0) {
 			is_the_socket_valid = false;
 		}
@@ -185,30 +188,6 @@ int socket_receive(socket_t *self, char* buffer, size_t size){
 }
 
 
-/*int socket_receive(socket_t *self, char* buffer, size_t length){
-	int received = 0;
-	int s = 0;
-	bool is_the_socket_valid = true;
-
-	memset(buffer ,0 , length);
-	while (received < length && is_the_socket_valid) {
-		s = recv(self->socket, buffer+received, length, MSG_NOSIGNAL);
-		if (s <= 0) {
-			is_the_socket_valid = false;
-		}
-		else {
-		received += s;
-		}
-	}
-
-	buffer[received] = '\0';
-	if (is_the_socket_valid) {
-		return received;
-	}
-	else {
-		return -1;
-	}
-}*/
 
 
 //Cliente servidor

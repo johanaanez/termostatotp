@@ -332,11 +332,11 @@ int sendTemperatures(socket_t *skt, char *fileSensor,char *startDate,char *step)
 	float lastValue = 0 ,convertedTemp = 0;
 	unsigned short int temp=0;
 	char  stringdt[20];
-	char tempToString[10];
-	memset(tempToString, '\0', 10);
+	char tempToString[6];
+	memset(tempToString, 0, 6);
 
 	const char delimiter[7] = " -/_.:";
-	char space[2]=" ";
+	char space=' ';
 
 	dateTime_t dt;
 	dateTime_createWithString(&dt, startDate, delimiter);
@@ -360,15 +360,16 @@ int sendTemperatures(socket_t *skt, char *fileSensor,char *startDate,char *step)
 			firstMinute = false;
 		}
 
-		snprintf(tempToString, 8, "%s%.1f", space, convertedTemp);
+		snprintf(tempToString, 7, "%c%.1f", space, convertedTemp);
 		if (quantityPerMin< maxQuantityPerMin){
 			printf("%s", tempToString);
 		}
 
 		if (quantityPerMin== maxQuantityPerMin){
-			char lastTempToString[10];
+			char lastTempToString[6];
+			memset(lastTempToString, 0, 6);
 			strncpy(lastTempToString,tempToString,6);
-			snprintf(tempToString, 10, "%s%s", lastTempToString, "\n");
+			snprintf(tempToString, 8, "%s%c", lastTempToString, '\n');
 			printf("%s", tempToString);
 
 			if (firstvalue< maxQuantityPerMin){
@@ -402,14 +403,27 @@ int sendTemperatures(socket_t *skt, char *fileSensor,char *startDate,char *step)
 	return 0;
 }
 
-int saveTemperatures(package_t *package, dateTime_t *dt, char *string, package_t allTemperatures[]){
+int saveTemperatures(package_t *package, dateTime_t *dt, char *string, package_t allTemperatures[], char *resto){
+	int index = strcspn(string, " ");
+	const char *ptr = string;
+	char field [ 21 ];
+	int n;
+	char fecha[20];
 
-	int index = strcspn(string, "");
+	if (index >0){
+		while ( sscanf(ptr, "%21[^ ]%n", field, &n) == 1 ){
+			  ptr += n; /* advance the pointer by the number of characters read */
+			  if ( *ptr != ' ' )
+			  {
+				 break; /* didn't find an expected delimiter, done? */
+			  }
+			  ++ptr; /* skip the delimiter */
+		   }
 
+	}
 
-	//dividir el string con spacios
-	//si largo >= 19 createwithString
-	//Sino transformar con snprintf
+	strncpy(resto, ptr, strlen(ptr));
+
 	return 0;
 }
 
@@ -418,7 +432,6 @@ int main(int argc, char *argv[]) {
 	int status = 0;
 	int isServer = 0;
 	int bytes;
-
 
 	//INICIALIZACION CLIENTE
 	char *hostname = "localhost";
@@ -460,7 +473,7 @@ int main(int argc, char *argv[]) {
 		}
 
 		//LOOP PARA RECEIVE
-		bytes = socket_receive(&client, idTermostato,7);
+		bytes = socket_receive(&client, idTermostato,6);
 
 		printf(RECIBIENDO);
 		printf("%s \n", idTermostato);
@@ -469,27 +482,25 @@ int main(int argc, char *argv[]) {
 			return CONNECTION_ERROR;
 		}
 
-		char *total = malloc(1000*sizeof(char));
-		memset(total, 0, 1000);
-
 		char temperature[30];
 		char date[22];
 		package_t package;
 		dateTime_t dt;
 		package_t allTemperatures[24];
+		char *resto = malloc(19*sizeof(char));
 
-		//NO HACER UN SOLO RCV, DA SMASH DETECTED!
+
 		while (continue_running) {
-			bytes = socket_receive(&client, date, 20);
+			bytes = socket_receiveTemp(&client, date, 20);
 			if (bytes <= 0){
 				continue_running = false;
 			}
-			bytes = socket_receive(&client, temperature, 20);
+			bytes = socket_receiveTemp(&client, temperature, 9);
 			if (bytes <= 0){
 				continue_running = false;
 			}
 
-			saveTemperatures(&package, &dt, temperature,allTemperatures);
+			saveTemperatures(&package, &dt, temperature,allTemperatures, resto);
 			printf(DATOS_RECIBIDOS);
 			printf("%s%s\n", date, temperature);
 		}
@@ -500,6 +511,7 @@ int main(int argc, char *argv[]) {
 		printf(TERMOESTATO_DESCONECTADO);
 		printf("%s \n", idTermostato);
 		socket_destroy(&server);
+		free(resto);
 	}
 	else{ //MODO CLIENTE
 		socket_create(&client);
@@ -509,8 +521,8 @@ int main(int argc, char *argv[]) {
 		char *step = argv[5];
 		startDate = argv[6];
 		fileSensor = argv[7];
-		char idTermoToSend[9];
-		char enter[2]= "\n";
+		char idTermoToSend[10];
+		char enter= '\n';
 
 		status = socket_connect(&server, hostname, port);
 
@@ -518,7 +530,7 @@ int main(int argc, char *argv[]) {
 			return CONNECTION_ERROR;
 		}
 
-		snprintf(idTermoToSend, 9, "%s %s", idTermostato, enter);
+		snprintf(idTermoToSend, 10, "%s%c", idTermostato, enter);
 		status = socket_send(&server, idTermoToSend, strlen(idTermoToSend));
 		printf("Enviando id : %s", idTermoToSend);
 

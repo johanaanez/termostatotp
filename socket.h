@@ -8,6 +8,9 @@
 #define SOCKET_H_
 #endif /* SOCKET_H_ */
 
+ #ifndef _POSIX_C_SOURCE
+  #define _POSIX_C_SOURCE 200112L
+  #endif
 
 #include <stddef.h>
 #include <sys/types.h>
@@ -40,6 +43,7 @@ int socket_accept(socket_t *self, socket_t* accepted_socket);
 int socket_connect(socket_t *self, const char* host_name, const char* port);
 int socket_send(socket_t *self, const char* buffer, size_t length);
 int socket_receive(socket_t *self, char* buffer, size_t length);
+int socket_receiveTemp(socket_t *self, char* buffer, size_t size);
 void socket_shutdown(socket_t *self);
 
 
