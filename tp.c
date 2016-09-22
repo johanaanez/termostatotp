@@ -495,14 +495,9 @@ int main(int argc, char *argv[]) {
 			if (bytes <= 0){
 				continue_running = false;
 			}
-			bytes = socket_receiveTemp(&client, temperature, 9);
-			if (bytes <= 0){
-				continue_running = false;
-			}
-
 			saveTemperatures(&package, &dt, temperature,allTemperatures, resto);
 			printf(DATOS_RECIBIDOS);
-			printf("%s%s\n", date, temperature);
+			printf("%s\n", date);
 		}
 
 
