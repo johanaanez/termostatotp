@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include "socket.h"
-#include "package.h"
+#include "dateTime.h"
 
 #ifndef INVALID_PARAMS
 #define INVALID_PARAMS 2
@@ -94,58 +94,19 @@
 
 
 bool isValidParams(int argc, char *argv[], int server){
-	int step= 0, port = 20;
-	char *ptr;
-	FILE *sensorInput;
-
 
 	if (server == 0){
 		if(argc !=3){
 			return false;
 		}
 
-		//VALIDA EL RANGO DE TCP VALIDO
-		port = strtol(argv[2], &ptr, 10);
-		if ((port > MAX_PORT) || (port < MIN_PORT)){
-			return false;
-		}
 	}
 	else{
 		if(argc !=8){
 			return false;
 		}
 
-		dateTime_t dt;
-		int isValid=0;
-		const char delimiter[7] = " -.:_/";
-
-		//VALIDA EL RANGO DE PUERTO TCP VALIDO
-		port = strtol(argv[3], &ptr, 10);
-		if ((port > MAX_PORT) || (port < MIN_PORT)){
-			return false;
-		}
-
-		//VALIDA EL RANGO DEL STEP
-		step = strtol(argv[5], &ptr, 10);
-
-		if (step < STEP_MIN || step > STEP_MAX){
-			return false;
-		}
-
-		//VALIDA QUE SEA UNA FECHA Y DIA VALIDOS
-		isValid = dateTime_createWithString(&dt,argv[6], delimiter);
-		if (isValid==INVALID_PARAMS){
-			return false;
-		}
-
-		//VALIDA QUE EL ARCHIVO EXISTA
-		sensorInput = fopen(argv[7],"rb");
-		if ( sensorInput == NULL ) {
-			return false;
-		}
-		fclose(sensorInput);
 	}
-
 	return true;
 }
 
@@ -163,7 +124,6 @@ int isServerMode(int argc, char *argv[]){
 	if (strcmp(argv[1],CLIENT) == 0){
 			return 1;
 	}
-	else
 
 	return 2;
 }
@@ -256,17 +216,13 @@ int writeLog(float temperatures[],char *date, char *idTermostato, char *step){
 	strcat(line, idTermostato);
 	strcat(line, " ");
 
-	//printf("NO CONSTANTES \n");
+
 	strcat(line, MAX);
 	strcat(line, values);
 	strcat(line, " ");
 	strcat(line, MUESTRAS);
 	strcat(line, cant);
 
-	//printf("LINEA COMPLETA \n");
-	//fputs(line, outPutTemperatures);
-	printf(DATOS_RECIBIDOS);
-	printf("%d \n", size);
 
 	free(cant);
 	free(line);
@@ -356,13 +312,13 @@ int sendTemperatures(socket_t *skt, char *fileSensor,char *startDate,char *step)
 				fclose(inputTemperatures);
 				return CONNECTION_ERROR;
 			}
-			printf("%s", stringdt);
+			//printf("%s", stringdt);
 			firstMinute = false;
 		}
 
 		snprintf(tempToString, 7, "%c%.1f", space, convertedTemp);
 		if (quantityPerMin< maxQuantityPerMin){
-			printf("%s", tempToString);
+			//printf("%s", tempToString);
 		}
 
 		if (quantityPerMin== maxQuantityPerMin){
@@ -370,14 +326,14 @@ int sendTemperatures(socket_t *skt, char *fileSensor,char *startDate,char *step)
 			memset(lastTempToString, 0, 6);
 			strncpy(lastTempToString,tempToString,6);
 			snprintf(tempToString, 8, "%s%c", lastTempToString, '\n');
-			printf("%s", tempToString);
+			//printf("%s", tempToString);
 
 			if (firstvalue< maxQuantityPerMin){
 				quantityPerMin = firstvalue;
 				firstvalue = maxQuantityPerMin;
 			}
 
-			printf("%s- Enviando %d muestras\n", stringdt, quantityPerMin);
+			fprintf(stderr,"%s- Enviando %d muestras\n", stringdt, quantityPerMin);
 
 			quantityPerMin= 0;
 			dateTime_increaseMinutes(&dt);
@@ -396,38 +352,17 @@ int sendTemperatures(socket_t *skt, char *fileSensor,char *startDate,char *step)
 
 	}
 
-	printf("\n%s- Enviando %d muestras \n", stringdt, quantityPerMin-1);
-	//printf("%d \n", quantityPerDay);
+	fprintf(stderr,"%s- Enviando %d muestras\n", stringdt, quantityPerMin-1);
+
 
 	fclose(inputTemperatures);
 	return 0;
 }
 
-int saveTemperatures(package_t *package, dateTime_t *dt, char *string, package_t allTemperatures[], char *resto){
-	int index = strcspn(string, " ");
-	const char *ptr = string;
-	char field [ 21 ];
-	int n;
-	char fecha[20];
 
-	if (index >0){
-		while ( sscanf(ptr, "%21[^ ]%n", field, &n) == 1 ){
-			  ptr += n; /* advance the pointer by the number of characters read */
-			  if ( *ptr != ' ' )
-			  {
-				 break; /* didn't find an expected delimiter, done? */
-			  }
-			  ++ptr; /* skip the delimiter */
-		   }
-
-	}
-
-	strncpy(resto, ptr, strlen(ptr));
-
-	return 0;
-}
 
 int main(int argc, char *argv[]) {
+
 
 	int status = 0;
 	int isServer = 0;
@@ -435,8 +370,8 @@ int main(int argc, char *argv[]) {
 
 	//INICIALIZACION CLIENTE
 	char *hostname = "localhost";
-	char *port ="8080";
-	char *idTermostato= malloc(sizeof(7));
+	char *port = "8080";
+	char *idTermostato= malloc(7*sizeof(char));
 
 	char *startDate;
 	char *fileSensor;
@@ -448,7 +383,6 @@ int main(int argc, char *argv[]) {
 
 	//PARAMETROS INVALIDOS
 	if (isValidParams(argc, argv, isServer) == false){
-
 		return INVALID_PARAMS;
 	}
 
@@ -472,41 +406,46 @@ int main(int argc, char *argv[]) {
 			return CONNECTION_ERROR;
 		}
 
-		//LOOP PARA RECEIVE
-		bytes = socket_receive(&client, idTermostato,6);
+		bytes = socket_receive(&client, idTermostato,7);
 
-		printf(RECIBIENDO);
-		printf("%s \n", idTermostato);
+		fprintf(stderr, RECIBIENDO);
+		fprintf(stderr,"%s \n", idTermostato);
 
 		if (bytes < 0){
 			return CONNECTION_ERROR;
 		}
 
-		char temperature[30];
-		char date[22];
-		package_t package;
-		dateTime_t dt;
-		package_t allTemperatures[24];
-		char *resto = malloc(19*sizeof(char));
+
+		char buffer[21];
+		memset(buffer, 0, 21);
+		int minutes = 0, quantityPerDay = 0, quantityPerMin =0 ;
 
 
 		while (continue_running) {
-			bytes = socket_receiveTemp(&client, date, 20);
+			bytes = socket_receiveTemp(&client, buffer, 20);
 			if (bytes <= 0){
 				continue_running = false;
 			}
-			saveTemperatures(&package, &dt, temperature,allTemperatures, resto);
-			printf(DATOS_RECIBIDOS);
-			printf("%s\n", date);
+			if(strlen(buffer)>19){
+				fprintf(stderr,"%s- ", buffer);
+				fprintf(stderr,DATOS_RECIBIDOS);
+				fprintf(stderr,"%d\n", quantityPerMin);
+				minutes++;
+				quantityPerMin = 0;
+			}
+			else{
+				quantityPerMin++;
+				quantityPerDay++;
+			}
 		}
 
 
-		//logTemperatures(server, client, temperatures, startDate, idTermostato, step);
+
 		socket_shutdown(&server);
-		printf(TERMOESTATO_DESCONECTADO);
-		printf("%s \n", idTermostato);
+		fprintf(stderr, TERMOESTATO_DESCONECTADO);
+		fprintf(stderr, "%s \n", idTermostato);
 		socket_destroy(&server);
-		free(resto);
+
 	}
 	else{ //MODO CLIENTE
 		socket_create(&client);
@@ -517,6 +456,7 @@ int main(int argc, char *argv[]) {
 		startDate = argv[6];
 		fileSensor = argv[7];
 		char idTermoToSend[10];
+		memset(idTermoToSend, 0, 10);
 		char enter= '\n';
 
 		status = socket_connect(&server, hostname, port);
@@ -526,8 +466,7 @@ int main(int argc, char *argv[]) {
 		}
 
 		snprintf(idTermoToSend, 10, "%s%c", idTermostato, enter);
-		status = socket_send(&server, idTermoToSend, strlen(idTermoToSend));
-		printf("Enviando id : %s", idTermoToSend);
+		status = socket_send(&server, idTermoToSend, strlen(idTermoToSend)+1);
 
 		status = sendTemperatures(&server, fileSensor, startDate, step);
 

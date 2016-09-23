@@ -6,19 +6,16 @@
 C_SRCS += \
 ../dateTimee.c \
 ../package.c \
-../socket.c \
 ../tp.c 
 
 OBJS += \
 ./dateTimee.o \
 ./package.o \
-./socket.o \
 ./tp.o 
 
 C_DEPS += \
 ./dateTimee.d \
 ./package.d \
-./socket.d \
 ./tp.d 
 
 
