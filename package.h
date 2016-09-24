@@ -8,16 +8,18 @@
 
 
 typedef struct {
+	float *temperatures;
 	int size;
-	float temperatures[900];
-	dateTime_t dt[60];
+	dateTime_t *dt;
 	int maxQuantityPerMin;
 } package_t;
 
-int package_create(package_t *self,char *string);
+int package_create(package_t *self,dateTime_t *dt);
 int package_destroy(package_t *self);
 float* package_getTemperatures(package_t *self);
-dateTime_t* package_getDateTime(package_t *self);
-float* package_getTemperatures(package_t *self);
+dateTime_t* package_getDateTime(package_t self);
+int package_setDateTime(package_t *self, dateTime_t *dt);
+float* package_getSize(package_t self);
+int package_addTemperature(package_t *self,char *temp);
 
 #endif /* PACKAGE_H_ */

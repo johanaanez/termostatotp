@@ -177,7 +177,7 @@ int getMinAndMax(float temperatures[],int size, char *line){
     mediana = getMediana(temperatures, size);
 	max = temperatures[size-1];
 
-	snprintf(bufferMax, 6, "%.02f", max);
+	/*snprintf(bufferMax, 6, "%.02f", max);
 	snprintf(bufferMin, 6, "%.02f", min);
 	snprintf(bufferMediana, 6, "%.02f", mediana);
 
@@ -187,7 +187,7 @@ int getMinAndMax(float temperatures[],int size, char *line){
     strcat(bufferMax, " ");
     strcat(bufferMax, MEDIANA);
     strcat(bufferMax, bufferMediana);
-    strncpy(line, bufferMax, 50 );
+    strncpy(line, bufferMax, 50 );*/
 
     free(bufferMax);
     free(bufferMin);
@@ -358,7 +358,10 @@ int sendTemperatures(socket_t *skt, char *fileSensor,char *startDate,char *step)
 	return 0;
 }
 
-int saveTemperatures(package_t *package, dateTime_t *date, char *string){
+int saveTemperatures(package_t *package, char *string){
+
+
+
 
 	return 0;
 
@@ -422,11 +425,11 @@ int main(int argc, char *argv[]) {
 		char buffer[21];
 		char date[21];
 		memset(buffer, 0, 21);
-		dateTime_t dt;
-		package_t package;
 		int days= 0,minutes = 0, quantityPerDay = 0, quantityPerMin =1 ;
 		bool isNewMinute=false;
 		const char delimiter[7] = " -/_.:";
+		dateTime_t dt;
+		package_t package;
 
 		while (continue_running) {
 			bytes = socket_receiveTemp(&client, buffer, 20, &isNewMinute);
@@ -438,13 +441,13 @@ int main(int argc, char *argv[]) {
 				fprintf(stderr,"%s- ", date);
 				fprintf(stderr,DATOS_RECIBIDOS);
 				fprintf(stderr,"%d\n", quantityPerMin);
-				saveTemperatures(&package,&dt, buffer);
 
 				if (dateTime_isLastMinuteOfDay(&dt)){
 					days++;
 					fprintf(stdout,"Dia:%d\n", days);
 					fprintf(stdout,"Minutos en el dia: %d\n", minutes);
-
+					float *temperatures= malloc(minutes*sizeof(float));
+					//getMinAndMax(temperatures,days,line);
 					minutes= 0;
 				}
 				quantityPerMin = 0;
@@ -454,20 +457,19 @@ int main(int argc, char *argv[]) {
 				}
 
 			}
-			if(strlen(buffer)>19){ //LEE UNA FECHA
+			if(strlen(buffer)>19){ //LEE UNA FECHA y CREA EL PAQUETE
 				strncpy(date, buffer, strlen(buffer)+1);
 				dateTime_createWithString(&dt,date, delimiter);
+				package_create(&package, &dt);
 				minutes++;
 			}
 
 			else{
 				quantityPerMin++;
 				quantityPerDay++;
-				saveTemperatures(&package,&dt, buffer);
 			}
 
-
-
+			saveTemperatures(&package, buffer);
 		}
 
 		fprintf(stderr,"%s- ", date);
