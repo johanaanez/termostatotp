@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include "socket.h"
-#include "dateTime.h"
+#include "package.h"
 
 #ifndef INVALID_PARAMS
 #define INVALID_PARAMS 2
@@ -333,7 +333,7 @@ int sendTemperatures(socket_t *skt, char *fileSensor,char *startDate,char *step)
 				firstvalue = maxQuantityPerMin;
 			}
 
-			fprintf(stderr,"%s- Enviando %d muestras\n", stringdt, quantityPerMin);
+			fprintf(stderr,"%s - Enviando %d muestras\n", stringdt, quantityPerMin);
 
 			quantityPerMin= 0;
 			dateTime_increaseMinutes(&dt);
@@ -352,17 +352,21 @@ int sendTemperatures(socket_t *skt, char *fileSensor,char *startDate,char *step)
 
 	}
 
-	fprintf(stderr,"%s- Enviando %d muestras\n", stringdt, quantityPerMin-1);
-
+	fprintf(stderr,"%s - Enviando %d muestras\n", stringdt, quantityPerMin-1);
 
 	fclose(inputTemperatures);
 	return 0;
 }
 
+int saveTemperatures(package_t *package, dateTime_t *date, char *string){
+
+	return 0;
+
+}
+
 
 
 int main(int argc, char *argv[]) {
-
 
 	int status = 0;
 	int isServer = 0;
@@ -389,7 +393,6 @@ int main(int argc, char *argv[]) {
 	socket_t server;
 	socket_t client;
 
-
 	if (isServer == 0){ //MODO SERVER
 		socket_create(&server);
 		socket_create(&client);
@@ -409,7 +412,7 @@ int main(int argc, char *argv[]) {
 		bytes = socket_receive(&client, idTermostato,7);
 
 		fprintf(stderr, RECIBIENDO);
-		fprintf(stderr,"%s \n", idTermostato);
+		fprintf(stderr,"%s", idTermostato);
 
 		if (bytes < 0){
 			return CONNECTION_ERROR;
@@ -417,33 +420,67 @@ int main(int argc, char *argv[]) {
 
 
 		char buffer[21];
+		char date[21];
 		memset(buffer, 0, 21);
-		int minutes = 0, quantityPerDay = 0, quantityPerMin =0 ;
-
+		dateTime_t dt;
+		package_t package;
+		int days= 0,minutes = 0, quantityPerDay = 0, quantityPerMin =1 ;
+		bool isNewMinute=false;
+		const char delimiter[7] = " -/_.:";
 
 		while (continue_running) {
-			bytes = socket_receiveTemp(&client, buffer, 20);
+			bytes = socket_receiveTemp(&client, buffer, 20, &isNewMinute);
 			if (bytes <= 0){
 				continue_running = false;
 			}
-			if(strlen(buffer)>19){
-				fprintf(stderr,"%s- ", buffer);
+			if(isNewMinute){ //LEYO LA ULTIMA TEMPERATURA
+				isNewMinute = false;
+				fprintf(stderr,"%s- ", date);
 				fprintf(stderr,DATOS_RECIBIDOS);
 				fprintf(stderr,"%d\n", quantityPerMin);
-				minutes++;
+				saveTemperatures(&package,&dt, buffer);
+
+				if (dateTime_isLastMinuteOfDay(&dt)){
+					days++;
+					fprintf(stdout,"Dia:%d\n", days);
+					fprintf(stdout,"Minutos en el dia: %d\n", minutes);
+
+					minutes= 0;
+				}
 				quantityPerMin = 0;
+				if(dateTime_isNewDay(&dt)){
+					days++;
+					minutes=0;
+				}
+
 			}
+			if(strlen(buffer)>19){ //LEE UNA FECHA
+				strncpy(date, buffer, strlen(buffer)+1);
+				dateTime_createWithString(&dt,date, delimiter);
+				minutes++;
+			}
+
 			else{
 				quantityPerMin++;
 				quantityPerDay++;
+				saveTemperatures(&package,&dt, buffer);
 			}
+
+
+
 		}
 
-
+		fprintf(stderr,"%s- ", date);
+		fprintf(stderr,DATOS_RECIBIDOS);
+		fprintf(stderr,"%d\n", quantityPerMin-1);
+		fprintf(stdout,"Dia:%d\n", days);
+		fprintf(stdout,"Minutos en el dia: %d\n", minutes);
 
 		socket_shutdown(&server);
+		socket_shutdown(&client);
 		fprintf(stderr, TERMOESTATO_DESCONECTADO);
 		fprintf(stderr, "%s \n", idTermostato);
+		socket_destroy(&client);
 		socket_destroy(&server);
 
 	}

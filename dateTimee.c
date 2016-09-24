@@ -288,3 +288,31 @@ char* dateTime_get(dateTime_t *self, char *dt){
 	return "";
 
 }
+
+bool dateTime_isNewDay(dateTime_t *self){
+	if(self->hour == 0 && self->minutes== 0 && self->seconds==0){
+		return true;
+	}
+	return false;
+}
+
+bool dateTime_isLastMinuteOfDay(dateTime_t *self){
+	if(self->hour == MAX_HOUR && self->minutes== MAX_MINUTES){
+		return true;
+	}
+	return false;
+}
+
+bool dateTime_isNewYear(dateTime_t *self){
+	if(dateTime_isNewDay(self) && self->month == 1 && self->day== 1){
+			return true;
+		}
+	return false;
+}
+
+int dateTime_getMinutesToNextDay(dateTime_t *self){
+	if (dateTime_isNewDay(self)){
+		return 0;
+	}
+	return (((MAX_MINUTES+1)*(MAX_HOUR+1)) - self->minutes);
+}
