@@ -4,20 +4,29 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
+../client.c \
 ../dateTimee.c \
+../list.c \
 ../package.c \
+../server.c \
 ../socket.c \
 ../tp.c 
 
 OBJS += \
+./client.o \
 ./dateTimee.o \
+./list.o \
 ./package.o \
+./server.o \
 ./socket.o \
 ./tp.o 
 
 C_DEPS += \
+./client.d \
 ./dateTimee.d \
+./list.d \
 ./package.d \
+./server.d \
 ./socket.d \
 ./tp.d 
 

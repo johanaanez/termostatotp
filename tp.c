@@ -64,9 +64,6 @@
 #define ENVIANDO  "Enviando "
 #endif
 
-#ifndef MUESTRAS
-#define MUESTRAS  " muestras"
-#endif
 
 #ifndef TEMP_MIN
 #define TEMP_MIN  0
@@ -177,7 +174,7 @@ int getMinAndMax(float temperatures[],int size, char *line){
     mediana = getMediana(temperatures, size);
 	max = temperatures[size-1];
 
-	/*snprintf(bufferMax, 6, "%.02f", max);
+	snprintf(bufferMax, 6, "%.02f", max);
 	snprintf(bufferMin, 6, "%.02f", min);
 	snprintf(bufferMediana, 6, "%.02f", mediana);
 
@@ -187,7 +184,7 @@ int getMinAndMax(float temperatures[],int size, char *line){
     strcat(bufferMax, " ");
     strcat(bufferMax, MEDIANA);
     strcat(bufferMax, bufferMediana);
-    strncpy(line, bufferMax, 50 );*/
+    strncpy(line, bufferMax, 50 );
 
     free(bufferMax);
     free(bufferMin);
@@ -196,14 +193,7 @@ int getMinAndMax(float temperatures[],int size, char *line){
     return 0;
 }
 
-int writeLog(float temperatures[],char *date, char *idTermostato, char *step){
-	int maxQuantity = getMaxQuantityPerDay(step);
-	int size = (sizeof(temperatures) / sizeof(float));
-
-	if ( (maxQuantity == ERROR) || (size > maxQuantity)  ){
-		return ERROR;
-	}
-
+int writeLog(float temperatures[],int size,char *date, char *idTermostato){
 	char *line = malloc(60*sizeof(char));
 	char *values = malloc(50*sizeof(char));
 	char *cant= malloc(7*sizeof(char));
@@ -223,16 +213,11 @@ int writeLog(float temperatures[],char *date, char *idTermostato, char *step){
 	strcat(line, MUESTRAS);
 	strcat(line, cant);
 
+	fprintf(stdout,"%s\n", line);
 
 	free(cant);
 	free(line);
 	free(values);
-	return 0;
-}
-
-int logTemperatures(socket_t *server,socket_t *accepted_socket,float temperatures[], char *date, char *idTermostato, char *step){
-	//DIVIDIR EN DIAS Y ESCRIBIR POR DIAS
-	writeLog(temperatures, date, idTermostato, step);
 	return 0;
 }
 
@@ -358,13 +343,10 @@ int sendTemperatures(socket_t *skt, char *fileSensor,char *startDate,char *step)
 	return 0;
 }
 
-int saveTemperatures(package_t *package, char *string){
+int saveTemperatures(package_t *package,int pos, char *string){
 
-
-
-
+	package_addTemperature(package, pos,string);
 	return 0;
-
 }
 
 
@@ -438,15 +420,25 @@ int main(int argc, char *argv[]) {
 			}
 			if(isNewMinute){ //LEYO LA ULTIMA TEMPERATURA
 				isNewMinute = false;
+				saveTemperatures(&package, quantityPerMin-1, buffer);
 				fprintf(stderr,"%s- ", date);
 				fprintf(stderr,DATOS_RECIBIDOS);
 				fprintf(stderr,"%d\n", quantityPerMin);
+				float *temperatures = malloc((package.size)*sizeof(float));
+				temperatures = package_getTemperatures(&package);
+				int i;
+				for(i=0;i<quantityPerMin; i++){
+					fprintf(stderr, "%0.1f  ", *(temperatures+i));
+				}
+				fprintf(stderr, "\n");
+				//writeLog(temperatures,quantityPerMin,date,idTermostato);
 
 				if (dateTime_isLastMinuteOfDay(&dt)){
 					days++;
-					fprintf(stdout,"Dia:%d\n", days);
-					fprintf(stdout,"Minutos en el dia: %d\n", minutes);
-					float *temperatures= malloc(minutes*sizeof(float));
+					//fprintf(stdout,"Dia:%d\n", days);
+					//fprintf(stdout,"Minutos en el dia: %d\n", minutes);
+					float temperatures[3];
+					//package_getTemperatures(package);
 					//getMinAndMax(temperatures,days,line);
 					minutes= 0;
 				}
@@ -460,6 +452,7 @@ int main(int argc, char *argv[]) {
 			if(strlen(buffer)>19){ //LEE UNA FECHA y CREA EL PAQUETE
 				strncpy(date, buffer, strlen(buffer)+1);
 				dateTime_createWithString(&dt,date, delimiter);
+
 				package_create(&package, &dt);
 				minutes++;
 			}
@@ -467,9 +460,9 @@ int main(int argc, char *argv[]) {
 			else{
 				quantityPerMin++;
 				quantityPerDay++;
+				saveTemperatures(&package, quantityPerMin-2, buffer);
 			}
 
-			saveTemperatures(&package, buffer);
 		}
 
 		fprintf(stderr,"%s- ", date);
