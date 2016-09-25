@@ -136,9 +136,11 @@ int getMaxQuantityPerDay(char *step){
 	return ((60000 /  timeStep) *60 *24);
 }
 
-int comparefunc (const void *a,const void *b)
+int comparefunc (const void * a, const void * b)
 {
-   return ( *(float*)a - *(float*)b );
+  float fa = *(const float*) a;
+  float fb = *(const float*) b;
+  return (fa > fb) - (fa < fb);
 }
 
 float getMediana(float temperatures[], int size){
@@ -170,9 +172,15 @@ int getMinAndMax(float temperatures[],int size, char *line){
 	char *bufferMediana = malloc(6*sizeof(char));
 
     qsort(temperatures, size, sizeof(float), comparefunc);
-	min = temperatures[0];
+	min = temperatures[size-1];
     mediana = getMediana(temperatures, size);
-	max = temperatures[size-1];
+	max = temperatures[0];
+
+	int i;
+	for(i=0;i<size; i++){
+		fprintf(stderr, "%0.1f  ", *(temperatures+i));
+	}
+	fprintf(stderr, "\n");
 
 	snprintf(bufferMax, 6, "%.02f", max);
 	snprintf(bufferMin, 6, "%.02f", min);
@@ -426,12 +434,8 @@ int main(int argc, char *argv[]) {
 				fprintf(stderr,"%d\n", quantityPerMin);
 				float *temperatures = malloc((package.size)*sizeof(float));
 				temperatures = package_getTemperatures(&package);
-				int i;
-				for(i=0;i<quantityPerMin; i++){
-					fprintf(stderr, "%0.1f  ", *(temperatures+i));
-				}
-				fprintf(stderr, "\n");
-				//writeLog(temperatures,quantityPerMin,date,idTermostato);
+
+				writeLog(temperatures,quantityPerMin,date,idTermostato);
 
 				if (dateTime_isLastMinuteOfDay(&dt)){
 					days++;
