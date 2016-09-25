@@ -153,7 +153,7 @@ float getMediana(float temperatures[], int size){
 		return temperatures[0];
 	}
 	if (size % 2 != 0){
-		return temperatures[(size/2) -1];
+		return temperatures[(size/2)];
 	}
 
 	med = (temperatures[(size/2)] +  temperatures[(size/2)-1])/2;
