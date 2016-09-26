@@ -70,3 +70,5 @@ bool dateTime_isNewYear(dateTime_t *self);
 int dateTime_getMinutesToNextDay(dateTime_t *self);
 char* dateTime_get(dateTime_t *self, char *dt);
 bool dateTime_isLastMinuteOfDay(dateTime_t *self);
+bool dateTime_equals(dateTime_t self, dateTime_t other);
+int dateTime_compare(dateTime_t self, dateTime_t other);

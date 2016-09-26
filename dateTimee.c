@@ -316,3 +316,28 @@ int dateTime_getMinutesToNextDay(dateTime_t *self){
 	}
 	return (((MAX_MINUTES+1)*(MAX_HOUR+1)) - self->minutes);
 }
+
+bool dateTime_equals(dateTime_t self, dateTime_t other){
+	/* Only compare date, not time*/
+
+	if(self.year == other.year && self.month == other.month && self.day == other.day ){
+		return true;
+	}
+	return false;
+}
+
+int dateTime_compare(dateTime_t self, dateTime_t other){
+	/* returns 1  if self.date  > other,date
+	 * returns 0  if self.date == other.date
+	 * returns -1 if self.date  < other.date  */
+
+	if(self.year >= other.year && self.month >= other.month > self.day > other.day ){
+		return 1;
+	}
+
+	if (dateTime_equals(self, other)){
+		return 0;
+	}
+
+	return -1;
+}

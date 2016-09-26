@@ -20,6 +20,7 @@ float* package_getTemperatures(package_t *self);
 dateTime_t* package_getDateTime(package_t self);
 int package_setDateTime(package_t *self, dateTime_t *dt);
 int package_getSize(package_t self);
-int package_addTemperature(package_t *self, int pos,char *temp);
+int package_addTemperature(package_t *self, int pos,float temp);
+
 
 #endif /* PACKAGE_H_ */
