@@ -33,8 +33,6 @@ int package_addTemperature(package_t *self, int pos,float temp){
 int package_destroy(package_t *self){
 	memset(self->temperatures, 0, self->size);
 	self->size =0;
-	free(self->dt);
-
 	return 0;
 }
 
