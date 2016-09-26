@@ -489,8 +489,8 @@ int main(int argc, char *argv[]) {
 		fprintf(stderr, "%s \n", idTermostato);
 
 		//writeLog(&list,dates, days, idTermostato);
-		package_destroy(&package);
-		list_destroy(&list);
+		//package_destroy(&package);
+		//list_destroy(&list);
 		socket_destroy(&client);
 		socket_destroy(&server);
 
