@@ -210,7 +210,6 @@ int writeLogPerDay(float temperatures[],int size,char *date, char *idTermostato)
 	strcat(line, idTermostato);
 	strcat(line, " ");
 
-
 	strcat(line, MAX);
 	strcat(line, values);
 	strcat(line, " ");
@@ -434,8 +433,7 @@ int main(int argc, char *argv[]) {
 		list_t list;
 		list_create(&list);
 		package_t package;
-		dateTime_t dates[3];
-
+		dateTime_t dates[6];
 
 		while (continue_running) {
 			bytes = socket_receiveTemp(&client, buffer, 20, &isNewMinute);
@@ -449,14 +447,15 @@ int main(int argc, char *argv[]) {
 				fprintf(stderr,DATOS_RECIBIDOS);
 				fprintf(stderr,"%d\n", quantityPerMin);
 
-				//list_addPackage(&list, package);
+				list_addPackage(&list, package);
 				if (dateTime_isLastMinuteOfDay(&dt)){
-					dates[days] = dt;
 					days++;
 				}
 				quantityPerMin = 0;
 				if(dateTime_isNewDay(&dt)){
 					days++;
+					minutes =0 ;
+					dates[days] = dt;
 				}
 
 			}
@@ -465,6 +464,7 @@ int main(int argc, char *argv[]) {
 				dateTime_createWithString(&dt,date, delimiter);
 				package_create(&package, &dt);
 				minutes++;
+				dates[days] = dt;
 			}
 
 			else{
@@ -475,13 +475,11 @@ int main(int argc, char *argv[]) {
 
 		}
 
-
-
 		fprintf(stderr,"%s- ", date);
 		fprintf(stderr,DATOS_RECIBIDOS);
 		fprintf(stderr,"%d\n", quantityPerMin-1);
-		fprintf(stdout,"Dia:%d\n", days);
-		fprintf(stdout,"Minutos en el dia: %d\n", minutes);
+		//fprintf(stdout,"Dia:%d\n", days);
+		//fprintf(stdout,"Minutos en el dia: %d\n", minutes);
 
 		socket_shutdown(&server);
 		socket_shutdown(&client);

@@ -4,7 +4,7 @@
 #include "package.h"
 
 typedef struct{
-	package_t packages[500];
+	package_t packages[400];
 	int size;
 }list_t;
 
