@@ -21,7 +21,6 @@ package_t getLastPackage(list_t self){
 //intenta entrar a un paquete anterior y da erro!
 int list_addPackage(list_t *self, package_t package){
 	dateTime_t *dt = package_getDateTime(package);
-	dateTime_t newDate = *dt;
 	dateTime_t *lastDt;
 	package_t lastPackage;
 
@@ -40,8 +39,10 @@ int list_addPackage(list_t *self, package_t package){
 
 	/* If do not exist, i add package to self->list*/
 	if(self->size == 0 || dateTime_compare(*dt, *lastDt) > 0 ){
+		dateTime_t *newDate= malloc(sizeof(newDate));
+		dateTime_createWithOther(*dt,newDate );
 		package_t newPackage;
-		package_create(&newPackage,&newDate);
+		package_create(&newPackage,newDate);
 
 		for(i=0; i< size; i++){
 			package_addTemperature(&newPackage, i, temperatures[i]);
@@ -53,7 +54,7 @@ int list_addPackage(list_t *self, package_t package){
 	else{
 		int initialSize = package_getSize(lastPackage);
 		for(i=0; i< size; i++){
-			package_addTemperature(&lastPackage, initialSize+i, temperatures[i]);
+			package_addTemperature(&self->packages[(self->size)-1], initialSize+i, temperatures[i]);
 		}
 
 		char d[20];

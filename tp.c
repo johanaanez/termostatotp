@@ -461,10 +461,11 @@ int main(int argc, char *argv[]) {
 			}
 			if(strlen(buffer)>19){ //LEE UNA FECHA y CREA EL PAQUETE
 				strncpy(date, buffer, strlen(buffer)+1);
+
 				dateTime_createWithString(&dt,date, delimiter);
 				package_create(&package, &dt);
 				minutes++;
-				dates[days] = dt;
+
 			}
 
 			else{

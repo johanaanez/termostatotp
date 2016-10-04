@@ -4,6 +4,7 @@
 int package_create(package_t *self,dateTime_t *dt){
 	self->dt = dt;
 	self->size = 0;
+
 	return 0;
 }
 float* package_getTemperatures(package_t *self){

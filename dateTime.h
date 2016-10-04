@@ -57,6 +57,7 @@ typedef struct {
 
 
 int dateTime_create(dateTime_t *self, int year,int month,int day, int hour, int minutes, int seconds, int milliseconds);
+int dateTime_createWithOther(dateTime_t self, dateTime_t *other);
 int dateTime_createWithString(dateTime_t *self, char string[], const char delimiter[]);
 int dateTime_destroy(dateTime_t *self);
 bool dateTime_isValid(dateTime_t *self);

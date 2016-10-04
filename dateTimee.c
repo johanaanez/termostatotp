@@ -1,5 +1,16 @@
 #include "dateTime.h"
 
+int dateTime_createWithOther(dateTime_t self, dateTime_t *other){
+	other->year = self.year;
+	other->month = self.month;
+	other->day = self.day;
+	other->hour = self.hour;
+	other->minutes = self.minutes;
+	other->seconds = self.seconds;
+
+	return 0;
+}
+
 int getMaxDay(int month){
     switch (month){
     case 12:
@@ -115,7 +126,6 @@ int dateTime_createWithString(dateTime_t *self, char string[], const char delimi
 	if (dateTime_isMonthValid(self) == false){
 		return INVALID_PARAMS;
 	}
-
 
 	token = strtok(NULL, delimiterDate);
 	value = strtol(token, &ptr, 10);
